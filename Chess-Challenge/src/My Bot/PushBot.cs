@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ChessChallenge.API;
 
-public class MyBot : IChessBot
+public class PushBot : IChessBot
 {
     // Test if this move gives checkmate
     (bool, bool) MoveIsCheckmate(Board board, Move move)
@@ -92,7 +92,7 @@ public class MyBot : IChessBot
             if (checks.Item1)
                 return move;
         }
-        
+
         return DoRandomMove(board, moves);
     }
 }

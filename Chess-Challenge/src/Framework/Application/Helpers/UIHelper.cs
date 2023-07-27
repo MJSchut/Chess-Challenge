@@ -60,9 +60,21 @@ namespace ChessChallenge.Application
         public static void DrawText(string text, Vector2 pos, int size, int spacing, Color col, AlignH alignH = AlignH.Left, AlignV alignV = AlignV.Centre)
         {
             Vector2 boundSize = Raylib.MeasureTextEx(font, text, size, spacing);
-            float offsetX = alignH == AlignH.Left ? 0 : (alignH == AlignH.Centre ? -boundSize.X / 2 : -boundSize.X);
-            float offsetY = alignV == AlignV.Top ? 0 : (alignV == AlignV.Centre ? -boundSize.Y / 2 : -boundSize.Y);
-            Vector2 offset = new(offsetX, offsetY);
+            float offsetX = alignH switch
+            {
+                AlignH.Left => 0,
+                AlignH.Centre => -boundSize.X / 2,
+                AlignH.Right => -boundSize.X,
+                _ => 0 // Handle any other unexpected cases
+            };
+            float offsetY = alignV switch
+            {
+                AlignV.Top => 0,
+                AlignV.Centre => -boundSize.Y / 2,
+                AlignV.Bottom => -boundSize.Y,
+                _ => 0 // Handle any other unexpected cases
+            };
+            Vector2 offset = new Vector2(offsetX, offsetY);
 
             if (SDF_Enabled)
             {

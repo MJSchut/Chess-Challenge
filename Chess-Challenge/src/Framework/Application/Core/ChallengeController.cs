@@ -19,13 +19,16 @@ namespace ChessChallenge.Application
         {
             Human,
             MyBot,
-            EvilBot
+            EvilBot,
+            MirrorBot,
+            RandomBot,
+            PushBot
         }
 
         // Game state
         Random rng;
         int gameID;
-        bool isPlaying;
+        public bool isPlaying;
         Board board;
         public ChessPlayer PlayerWhite { get; private set; }
         public ChessPlayer PlayerBlack {get;private set;}
@@ -38,7 +41,7 @@ namespace ChessChallenge.Application
 
         // Bot match state
         readonly string[] botMatchStartFens;
-        int botMatchGameIndex;
+        public int botMatchGameIndex;
         public BotMatchStats BotStatsA { get; private set; }
         public BotMatchStats BotStatsB {get;private set;}
         bool botAPlaysWhite;
@@ -55,7 +58,7 @@ namespace ChessChallenge.Application
         readonly int tokenCount;
         readonly StringBuilder pgns;
 
-        public ChallengeController()
+        public ChallengeController(bool ui = true)
         {
             Log($"Launching Chess-Challenge version {Settings.Version}");
             tokenCount = GetTokenCount();
@@ -63,7 +66,8 @@ namespace ChessChallenge.Application
 
             rng = new Random();
             moveGenerator = new();
-            boardUI = new BoardUI();
+            if (ui)
+                boardUI = new BoardUI();
             board = new Board();
             pgns = new();
 
@@ -103,9 +107,12 @@ namespace ChessChallenge.Application
             PlayerBlack.SubscribeToMoveChosenEventIfHuman(OnMoveChosen);
 
             // UI Setup
-            boardUI.UpdatePosition(board);
-            boardUI.ResetSquareColours();
-            SetBoardPerspective();
+            if (boardUI != null)
+            {
+               boardUI.UpdatePosition(board);
+               boardUI.ResetSquareColours();
+               SetBoardPerspective();    
+            }
 
             // Start
             isPlaying = true;
@@ -162,7 +169,6 @@ namespace ChessChallenge.Application
 
         void NotifyTurnToMove()
         {
-            //playerToMove.NotifyTurnToMove(board);
             if (PlayerToMove.IsHuman)
             {
                 PlayerToMove.Human.SetPosition(FenUtility.CurrentFen(board));
@@ -209,6 +215,9 @@ namespace ChessChallenge.Application
             {
                 PlayerType.MyBot => new ChessPlayer(new MyBot(), type, GameDurationMilliseconds),
                 PlayerType.EvilBot => new ChessPlayer(new EvilBot(), type, GameDurationMilliseconds),
+                PlayerType.RandomBot => new ChessPlayer(new RandomBot(), type, GameDurationMilliseconds),
+                PlayerType.MirrorBot => new ChessPlayer(new MirrorBot(), type, GameDurationMilliseconds),
+                PlayerType.PushBot => new ChessPlayer(new PushBot(), type, GameDurationMilliseconds),
                 _ => new ChessPlayer(new HumanPlayer(boardUI), type)
             };
         }
@@ -255,7 +264,8 @@ namespace ChessChallenge.Application
                 lastMoveMadeTime = (float)Raylib.GetTime();
 
                 board.MakeMove(move, false);
-                boardUI.UpdatePosition(board, move, animate);
+                if (boardUI != null)
+                    boardUI.UpdatePosition(board, move, animate);
 
                 GameResult result = Arbiter.GetGameState(board);
                 if (result == GameResult.InProgress)
@@ -279,7 +289,7 @@ namespace ChessChallenge.Application
 
                 if (log)
                 {
-                    Log("Game Over: " + result, false, ConsoleColor.Blue);
+                    Log($"Game #{botMatchGameIndex}::\t{result}", false, ConsoleColor.Blue);
                 }
 
                 string pgn = PGNCreator.CreatePGN(board, result, GetPlayerName(PlayerWhite), GetPlayerName(PlayerBlack));
@@ -437,12 +447,12 @@ namespace ChessChallenge.Application
 
         public class BotMatchStats
         {
-            public string BotName;
-            public int NumWins;
-            public int NumLosses;
-            public int NumDraws;
-            public int NumTimeouts;
-            public int NumIllegalMoves;
+            public string BotName { get; set; }
+            public int NumWins { get; set; }
+            public int NumLosses { get; set; }
+            public int NumDraws { get; set; }
+            public int NumTimeouts { get; set; }
+            public int NumIllegalMoves { get; set; }
 
             public BotMatchStats(string name) => BotName = name;
         }
