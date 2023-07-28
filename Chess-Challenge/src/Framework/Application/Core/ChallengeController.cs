@@ -22,7 +22,8 @@ namespace ChessChallenge.Application
             EvilBot,
             MirrorBot,
             RandomBot,
-            PushBot
+            PushBot,
+            MaximaxBot
         }
 
         // Game state
@@ -218,6 +219,7 @@ namespace ChessChallenge.Application
                 PlayerType.RandomBot => new ChessPlayer(new RandomBot(), type, GameDurationMilliseconds),
                 PlayerType.MirrorBot => new ChessPlayer(new MirrorBot(), type, GameDurationMilliseconds),
                 PlayerType.PushBot => new ChessPlayer(new PushBot(), type, GameDurationMilliseconds),
+                PlayerType.MaximaxBot => new ChessPlayer(new MaximaxBot(), type, GameDurationMilliseconds), 
                 _ => new ChessPlayer(new HumanPlayer(boardUI), type)
             };
         }

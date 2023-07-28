@@ -7,7 +7,7 @@ Raylib.SetTargetFPS(60);
 
 var cc = new ChallengeController(false);
 var botTypeA = ChallengeController.PlayerType.PushBot;
-var botTypeB = ChallengeController.PlayerType.RandomBot;
+var botTypeB = ChallengeController.PlayerType.EvilBot;
 cc.StartNewBotMatch(botTypeA, botTypeB);
 
 while (cc.TotalGameCount - 1 >= cc.botMatchGameIndex)
