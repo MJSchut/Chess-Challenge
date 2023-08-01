@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using ChessChallenge.API;
 
-public class MyBot : IChessBot
+public class MaximaxBotD2 : IChessBot
 {
     private int EvaluatePiece(int value, bool isWhite)
     {
@@ -89,7 +89,7 @@ public class MyBot : IChessBot
                         evaluation += AttackedSquare(board, piece) * 10;
                         break;
                     case PieceType.King:
-                        evaluation += EvaluatePiece(200, piece.IsWhite); 
+                        evaluation += EvaluatePiece(2000, piece.IsWhite); 
                         evaluation += AttackedSquare(board, piece) * 20;
                         break;
                     default:
@@ -104,7 +104,6 @@ public class MyBot : IChessBot
     public Move Think(Board board, Timer timer)
     {
         var moves = board.GetLegalMoves();
-        Console.WriteLine("Start thinking");
         var rand = new Random();
         var moveToMake = moves[rand.Next(moves.Length)];
         var bestScore = 0;
@@ -121,7 +120,6 @@ public class MyBot : IChessBot
             
             board.ForceSkipTurn();
             var newScore = Maximax(board, 1, isWhite, 0);
-            Console.WriteLine($"Top level. move: {move.StartSquare} to {move.TargetSquare}, capture {move.CapturePieceType}; evaluation: {newScore.ToString()}");
             board.UndoSkipTurn();
             board.UndoMove(move);
             
@@ -132,7 +130,6 @@ public class MyBot : IChessBot
             }
         }
 
-        Console.WriteLine($"Move to make: {moveToMake},  evaluation: {bestScore}\n");
         return moveToMake;
     }
 
@@ -152,7 +149,6 @@ public class MyBot : IChessBot
             board.ForceSkipTurn();
             var newScore = Evaluate(board, isWhite);
             bestScore = Math.Max(bestScore, newScore);
-            Console.WriteLine($"Depth {depth}. move: {move.StartSquare} to {move.TargetSquare}, capture {move.CapturePieceType}; evaluation: {newScore.ToString()}");
 
             var score = Maximax(board, depth - 1, isWhite, bestScore);
             bestScore += score; 

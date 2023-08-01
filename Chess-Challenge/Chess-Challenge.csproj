@@ -41,7 +41,10 @@
     <Compile Update="src\My Bot\PushBot.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
-    <Compile Update="src\My Bot\MaximaxBot.cs">
+    <Compile Update="src\My Bot\MaximaxBotD1.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Compile>
+    <Compile Update="src\My Bot\MaximaxBotD2.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
   </ItemGroup>

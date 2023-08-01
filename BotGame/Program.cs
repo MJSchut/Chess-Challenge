@@ -7,7 +7,7 @@ Raylib.SetTargetFPS(60);
 
 var cc = new ChallengeController(false);
 var botTypeA = ChallengeController.PlayerType.PushBot;
-var botTypeB = ChallengeController.PlayerType.EvilBot;
+var botTypeB = ChallengeController.PlayerType.MaximaxBotD2;
 cc.StartNewBotMatch(botTypeA, botTypeB);
 
 while (cc.TotalGameCount - 1 >= cc.botMatchGameIndex)
@@ -21,7 +21,7 @@ var parentDir = fileInfo.Directory.Parent.Parent;
 var parentDirName = parentDir.FullName;
 var path = Path.Combine(@"..\..", parentDirName, "data");
 
-if(!Directory.Exists(path))
+if (!Directory.Exists(path))
 {
     Directory.CreateDirectory(path);
 }
