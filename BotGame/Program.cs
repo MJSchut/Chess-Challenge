@@ -6,8 +6,8 @@ Raylib.InitWindow(100, 100, "Chess Coding Challenge - BOT");
 Raylib.SetTargetFPS(60);
 
 var cc = new ChallengeController(false);
-var botTypeA = ChallengeController.PlayerType.PushBot;
-var botTypeB = ChallengeController.PlayerType.MaximaxBotD2;
+var botTypeA = ChallengeController.PlayerType.MyBot;
+var botTypeB = ChallengeController.PlayerType.EvilBot;
 cc.StartNewBotMatch(botTypeA, botTypeB);
 
 while (cc.TotalGameCount - 1 >= cc.botMatchGameIndex)
@@ -26,7 +26,10 @@ if (!Directory.Exists(path))
     Directory.CreateDirectory(path);
 }
 
-Console.WriteLine(cc.BotStatsB.NumWins);
+if (cc.BotStatsA.NumWins > cc.BotStatsB.NumWins)
+{
+}
+
 var filename = $"{botTypeA}_{botTypeB}";
 cc.BotStatsA.BotName = filename;
 var jsonString = JsonSerializer.Serialize(cc.BotStatsA);

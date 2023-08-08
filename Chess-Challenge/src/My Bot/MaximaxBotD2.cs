@@ -6,45 +6,89 @@ using ChessChallenge.API;
 
 public class MaximaxBotD2 : IChessBot
 {
-    private int EvaluatePiece(int value, bool isWhite)
-    {
-        return isWhite ? value : -value;
-    }
-   
-    private int GetMiddlePositionalBonus(Piece piece, bool isWhite)
-    {
-        if (piece.Square.File is 3 or 4 &&
-            piece.Square.Rank is 3 or 4)
-        {
-            return isWhite ? 80 : -80;
-        }
+    private Random rand = new ();
 
-        if (piece.Square.Rank is 0 or 1 or 6 or 7 && 
-            piece.Square.File is 0 or 1 or 6 or 7)
+    private readonly Dictionary<PieceType, int> pieceValues = new() 
+    {
+        { PieceType.None, 0 },
+        { PieceType.Pawn, 100},
+        { PieceType.Knight, 200 },
+        { PieceType.Bishop, 220 },
+        { PieceType.Rook, 400 },
+        { PieceType.Queen, 800 },
+        { PieceType.King, 2000 }
+    };
+    private int RankValue = 10;
+    private int CentralBonus = 80;
+    private int PeripheralPenalty = -40;
+    private int LongDiagonalBonus = 40;
+    private float attackedSquareRatio = 1f;
+    
+    private int EvaluatePiece(Piece piece)
+    {
+        return pieceValues[piece.PieceType].MultiplyWithBool(piece.IsWhite);
+    }
+
+    /// <summary>
+    /// Pawns should be pushed forward as much as possible
+    /// </summary>
+    private int GetPushBonus(Piece piece)
+    {
+        if (piece.PieceType != PieceType.Pawn)
         {
-            return isWhite ? -40 : 40;
+            var score = piece.Square.Rank * RankValue;
+            if (!piece.IsWhite)
+                score = 7 * RankValue - score;
+
+            return score.MultiplyWithBool(piece.IsWhite);
         }
 
         return 0;
     }
+   
+    /// <summary>
+    /// Knights and Queens should prefer central positions
+    /// </summary>
+    private int GetMiddlePositionalBonus(Piece piece)
+    {
+        if (piece.PieceType is not (PieceType.Knight or PieceType.Queen))
+            return 0;
+        
+        if (piece.Square.File is 3 or 4 &&
+            piece.Square.Rank is 3 or 4)
+            return CentralBonus.MultiplyWithBool(piece.IsWhite);
 
+        if (piece.Square.Rank is 0 or 1 or 6 or 7 && 
+            piece.Square.File is 0 or 1 or 6 or 7)
+            return PeripheralPenalty.MultiplyWithBool(piece.IsWhite);
+
+        return 0;
+    }
+
+    /// <summary>
+    /// If a piece is under attack, reduce its score 
+    /// </summary>
     private int AttackedSquare(Board board, Piece piece)
     {
         if (board.SquareIsAttackedByOpponent(piece.Square))
         {
-            return piece.IsWhite ? -100 : 100;
+            return (int)MathF.Round(-pieceValues[piece.PieceType].MultiplyWithBool(piece.IsWhite) * attackedSquareRatio); 
         }
-        else
-        {
-            return piece.IsWhite ? 100 : -100;
-        }
+        
+        return 0;
     }
     
-    private int GetLongDiagonalPositionalBonus(Piece piece, bool isWhite)
+    /// <summary>
+    /// Bishop and Queens should prefer the long diagonal to maximise their vision
+    /// </summary>
+    private int GetLongDiagonalPositionalBonus(Piece piece)
     {
+        if (piece.PieceType is not (PieceType.Bishop or PieceType.Queen))
+            return 0;
+        
         if (piece.Square.File == piece.Square.Rank)
         {
-            return isWhite ? 40 : -40;
+            return LongDiagonalBonus.MultiplyWithBool(piece.IsWhite);
         }
 
         return 0;
@@ -55,59 +99,22 @@ public class MaximaxBotD2 : IChessBot
     {
         var allPieces = board.GetAllPieceLists();
 
-        var evaluation = 0;
-        foreach (var pieceList in allPieces)
-        {
-            foreach (var piece in pieceList)
-            {
-                switch (piece.PieceType)
-                {
-                    case PieceType.None:
-                        break;
-                    case PieceType.Pawn:
-                        evaluation += EvaluatePiece(100, piece.IsWhite);
-                        evaluation += GetMiddlePositionalBonus(piece, piece.IsWhite);
-                        evaluation += AttackedSquare(board, piece);
-                        break;
-                    case PieceType.Knight:
-                        evaluation += EvaluatePiece(200, piece.IsWhite);
-                        evaluation += GetMiddlePositionalBonus(piece, piece.IsWhite);
-                        evaluation += AttackedSquare(board, piece) * 2;
-                        break;
-                    case PieceType.Bishop:
-                        evaluation += EvaluatePiece(220, piece.IsWhite);
-                        evaluation += GetLongDiagonalPositionalBonus(piece, isWhite);
-                        evaluation += AttackedSquare(board, piece) * 3;
-                        break;
-                    case PieceType.Rook:
-                        evaluation += EvaluatePiece(400, piece.IsWhite);
-                        evaluation += AttackedSquare(board, piece) * 5;
-                        break;
-                    case PieceType.Queen:
-                        evaluation += EvaluatePiece(800, piece.IsWhite);
-                        evaluation += GetMiddlePositionalBonus(piece, piece.IsWhite);
-                        evaluation += AttackedSquare(board, piece) * 10;
-                        break;
-                    case PieceType.King:
-                        evaluation += EvaluatePiece(2000, piece.IsWhite); 
-                        evaluation += AttackedSquare(board, piece) * 20;
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
-        }
+        var evaluation = allPieces
+            .Sum(pieceList => pieceList
+                .Sum(piece => EvaluatePiece(piece) +
+                              GetPushBonus(piece) +
+                              GetMiddlePositionalBonus(piece) +
+                              GetLongDiagonalPositionalBonus(piece) +
+                              AttackedSquare(board, piece)));
 
-        return isWhite ? evaluation : -evaluation;
+        return evaluation.MultiplyWithBool(isWhite);
     }
     
     public Move Think(Board board, Timer timer)
     {
         var moves = board.GetLegalMoves();
-        var rand = new Random();
         var moveToMake = moves[rand.Next(moves.Length)];
         var bestScore = 0;
-        var isWhite = board.IsWhiteToMove;
 
         foreach (var move in moves)
         {
@@ -119,22 +126,25 @@ public class MaximaxBotD2 : IChessBot
             }
             
             board.ForceSkipTurn();
-            var newScore = Maximax(board, 1, isWhite, 0);
+            var newScore = Maximax(board, 1, board.IsWhiteToMove);
             board.UndoSkipTurn();
             board.UndoMove(move);
+
+            if (newScore <= bestScore) continue;
             
-            if (newScore > bestScore)
-            {
-                bestScore = newScore;
-                moveToMake = move;
-            }
+            bestScore = newScore;
+            moveToMake = move;
         }
 
         return moveToMake;
     }
 
 
-    public int Maximax(Board board, int depth, bool isWhite, int cutOff)
+    /// <summary>
+    /// I wouldn't expect this to work particularly well for depth > 1. At that point I'd use the median score
+    /// or something for a given move since summing will prefer moves that have more options
+    /// </summary>
+    public int Maximax(Board board, int depth, bool isWhite)
     {
         if (depth == 0 || board.IsInCheckmate())  
         {
@@ -142,19 +152,18 @@ public class MaximaxBotD2 : IChessBot
         }
         
         var moves = board.GetLegalMoves();
-        var bestScore = 0;
+        var totalScore = 0;
         foreach (var move in moves)
         {
             board.MakeMove(move);
             board.ForceSkipTurn();
-            var newScore = Evaluate(board, isWhite);
-            bestScore = Math.Max(bestScore, newScore);
-
-            var score = Maximax(board, depth - 1, isWhite, bestScore);
-            bestScore += score; 
+            
+            var score = Maximax(board, depth - 1, isWhite);
+            totalScore += score; 
+            
             board.UndoSkipTurn();
             board.UndoMove(move);
         }
-        return bestScore;
+        return totalScore;
     }
 }
